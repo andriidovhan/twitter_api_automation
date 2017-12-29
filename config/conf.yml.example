@@ -1,4 +1,6 @@
 ---
+email: example@gmail.com
+password: example_password
 consumer_key: "key_example"
 consumer_secret: "secret_key_example"
 access_token: "token_example"
