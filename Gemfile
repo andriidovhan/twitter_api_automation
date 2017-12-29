@@ -1,0 +1,11 @@
+source 'https://rubygems.org'
+
+gem 'rspec'
+gem 'twitter'
+gem 'pry'
+gem 'colorize'
+gem 'mechanize'
+gem 'faker'
+# gem 'twurl'
+# gem 'json'
+# gem 'hashie'
