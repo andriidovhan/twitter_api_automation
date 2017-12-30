@@ -4,46 +4,65 @@ require 'capybara/dsl'
 
 
 describe 'UI Twitter' do
-  include Capybara::DSL
+  CONF = ENV['CONF_PATH'] || 'config/conf.yml'
 
-  before :all do
-    Capybara.app_host = 'http://twitter.com'
-    Capybara.run_server = false
-    Capybara.default_driver = :selenium_chrome
-  end
-
-  it 'opens #home_timeline' do
-    CONF = ENV['CONF_PATH'] || 'config/conf.yml'
+  def log_in
+    credentials=YAML::load_file(CONF)
+    Log.error("Some credentials are not defined") if !credentials['email'] || !credentials['password']
 
     visit '/login'
-    fill_in 'Phone, email or username', :with => YAML::load_file(CONF)['email']
-    fill_in 'Password', :with => YAML::load_file(CONF)['password']
-    find(:css, ".t1-label.remember>input").set(true)
+    fill_in 'Phone, email or username', :with => credentials['email']
+    fill_in 'Password', :with => credentials['password']
+    check 'Remember me'
     click_on 'Log in'
-
-    binding.pry
-    #update
-    find('#tweet-box-home-timeline').set('11111test capybara')
-    click_on 'Tweet'
-
-    # expect(page).to have_content '....'
-
-    #duplicate
-    # expect(page).to have_content '....'
-
-    #destroy
-    # expect(page).to_not have_content "..."
   end
 
-  # it 'update' do
-  #
-  # end
-  #
-  # it '#not_update(due to dublicate)' do
-  #
-  # end
-  #
-  # it '#delete' do
-  #
-  # end
+  before :all do
+    Capybara.configure do |c|
+      c.app_host = 'http://twitter.com'
+      c.run_server = false
+      c.default_driver = :selenium_chrome
+      c.match = :first
+    end
+
+    @fake_status=Faker::Twitter.status[:text]
+    log_in
+  end
+
+  let(:fake_status) { @fake_status }
+
+
+  it '#home_timeline' do
+    visit '/'
+    find('#tweet-box-home-timeline').set(fake_status)
+    within('#timeline') do
+      find('.tweet-action.EdgeButton.EdgeButton--primary.js-tweet-btn').click
+    end
+
+    expect(page).to have_text fake_status
+    expect(page).to have_selector '#timeline'
+  end
+
+  it '#non_update(due to duplicate)' do
+    visit '/'
+    find('#tweet-box-home-timeline').set(fake_status)
+    within('#timeline') do
+      find('.tweet-action.EdgeButton.EdgeButton--primary.js-tweet-btn').click
+    end
+
+    sleep 1
+    expect(page).to have_text 'You have already sent this Tweet.'
+    find('#tweet-box-home-timeline').set(' ')
+  end
+
+  it '#destroy' do
+    visit '/'
+    find('.ProfileTweet-actionButton.u-textUserColorHover.dropdown-toggle.js-dropdown-toggle').click
+    click_on 'Delete Tweet'
+    click_on 'Delete'
+
+    sleep 1
+    expect(page).to have_text 'Your Tweet has been deleted.'
+    expect(page).to have_no_text fake_status
+  end
 end
