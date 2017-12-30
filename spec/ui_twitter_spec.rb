@@ -1,22 +1,7 @@
 require 'spec_helper'
-require 'capybara'
-require 'capybara/dsl'
 
 
 describe 'UI Twitter' do
-  CONF = ENV['CONF_PATH'] || 'config/conf.yml'
-
-  def log_in
-    credentials=YAML::load_file(CONF)
-    Log.error("Some credentials are not defined") if !credentials['email'] || !credentials['password']
-
-    visit '/login'
-    fill_in 'Phone, email or username', :with => credentials['email']
-    fill_in 'Password', :with => credentials['password']
-    check 'Remember me'
-    click_on 'Log in'
-  end
-
   before :all do
     Capybara.configure do |c|
       c.app_host = 'http://twitter.com'
@@ -26,13 +11,13 @@ describe 'UI Twitter' do
     end
 
     @fake_status=Faker::Twitter.status[:text]
-    log_in
+    UiTwitter.new.log_in
   end
 
   let(:fake_status) { @fake_status }
 
 
-  it '#home_timeline' do
+  it '#home_timeline, #update' do
     visit '/'
     find('#tweet-box-home-timeline').set(fake_status)
     within('#timeline') do
